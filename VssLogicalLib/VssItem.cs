@@ -73,7 +73,24 @@ namespace Hpdi.VssLogicalLib
 
         public IEnumerable<VssRevision> Revisions
         {
-            get { return new VssRevisions<VssItem, VssRevision>(this); }
+            get
+            {
+                VssRevisions<VssItem, VssRevision> result = new VssRevisions<VssItem, VssRevision>(this);
+                int numberOfRevisions = 0;
+                foreach (var item in result)
+                {
+                    numberOfRevisions++;
+                }
+                if (numberOfRevisions == RevisionCount)
+                    return result;
+
+                List<VssRevision> result2 = new List<VssRevision>();
+                for (int currentRevision = 1; currentRevision <= RevisionCount; currentRevision++)
+                {
+                    result2.Add(GetRevision(currentRevision));
+                }
+                return result2;
+            }
         }
 
         public VssRevision GetRevision(int version)

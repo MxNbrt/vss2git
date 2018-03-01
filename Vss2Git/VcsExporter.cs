@@ -598,7 +598,7 @@ namespace Hpdi.Vss2Git
                         foreach (var fileInfo in pathMapper.GetAllFiles(target.PhysicalName))
                         {
                             WriteRevision(pathMapper, actionType, fileInfo.PhysicalName,
-                                fileInfo.Version, target.PhysicalName);
+                                fileInfo.Version, target.PhysicalName, fileInfo.LogicalName);
                         }
                     }
                     else if (writeFile)
@@ -627,7 +627,7 @@ namespace Hpdi.Vss2Git
 
                 // write current rev to all sharing projects
                 WriteRevision(pathMapper, actionType, target.PhysicalName,
-                    revision.Version, null);
+                    revision.Version, null, target.LogicalName);
                 vcsWrapper.SetNeedsCommit();
             }
         }
@@ -705,7 +705,7 @@ namespace Hpdi.Vss2Git
         {
             // vcs tag names must be valid filenames, so replace sequences of
             // invalid characters with an underscore
-            var baseTag = Regex.Replace(label, "[^A-Za-z0-9_-]+", "_");
+            var baseTag = Regex.Replace(label, "[^A-Za-z0-9_.-]+", "_");
 
             // vcs tags are global, whereas VSS tags are local, so ensure
             // global uniqueness by appending a number; since the file system
@@ -720,9 +720,18 @@ namespace Hpdi.Vss2Git
         }
 
         private void WriteRevision(VssPathMapper pathMapper, VssActionType actionType,
-            string physicalName, int version, string underProject)
+            string physicalName, int version, string underProject, string logicalName)
         {
-            var paths = pathMapper.GetFilePaths(physicalName, underProject);
+            LinkedList<string> paths = pathMapper.GetFilePaths(physicalName, underProject) as LinkedList<string>;
+
+            if (paths.Count == 0)
+            {
+                // if pathmapper cant find folder, get it from windows explorer
+                String[] allFiles = Directory.GetFiles(vcsWrapper.GetOutputDirectory(), logicalName, SearchOption.AllDirectories);
+                if (allFiles.Length == 1)
+                    paths.AddLast(allFiles[0]);
+            }
+
             foreach (string path in paths)
             {
                 logger.WriteLine("{0}: {1} revision {2}", path, actionType, version);

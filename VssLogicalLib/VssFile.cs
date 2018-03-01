@@ -73,7 +73,15 @@ namespace Hpdi.VssLogicalLib
 
         public new IEnumerable<VssFileRevision> Revisions
         {
-            get { return new VssRevisions<VssFile, VssFileRevision>(this); }
+            get
+            {
+                List<VssFileRevision> result = new List<VssFileRevision>();
+                for (int currentRevision = 1; currentRevision <= RevisionCount; currentRevision++)
+                {
+                    result.Add(GetRevision(currentRevision));
+                }
+                return result;
+            }
         }
 
         public new VssFileRevision GetRevision(int version)
